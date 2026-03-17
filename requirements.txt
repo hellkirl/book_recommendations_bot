@@ -4,6 +4,6 @@ aiogram
 SQLAlchemy
 pydantic
 numpy
-pandas
+pandas>=2.0,<2.3
 faiss-cpu
 sentence-transformers
