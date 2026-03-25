@@ -21,3 +21,10 @@ class RatingRequest(BaseModel):
 
 class RatingResponse(BaseModel):
     unlocked_personal: bool
+
+
+class BookRatingMetricsResponse(BaseModel):
+    book_id: int
+    rating_count: int
+    rating_mean: float
+    ratings_by_score: dict[int, int]

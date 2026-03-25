@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from core.domain.model.rating import Rating
+from core.domain.model.rating_metrics import BookRatingMetrics
 
 
 class IRatingRepository(ABC):
@@ -16,3 +17,6 @@ class IRatingRepository(ABC):
 
     @abstractmethod
     def get_rated_book_ids(self, telegram_id: int) -> set[int]: ...
+
+    @abstractmethod
+    def get_book_metrics(self, book_id: int) -> BookRatingMetrics: ...

@@ -10,6 +10,7 @@ from core.application.usecases.get_popular import GetPopularUseCase
 from core.application.usecases.get_similar import GetSimilarUseCase
 from core.application.usecases.search_by_query import SearchByQueryUseCase
 from core.application.usecases.get_recommendations import GetRecommendationsUseCase
+from core.application.usecases.get_book_metrics import GetBookMetricsUseCase
 from core.application.usecases.save_rating import SaveRatingUseCase
 
 
@@ -52,3 +53,8 @@ def get_recommendations_uc() -> GetRecommendationsUseCase:
 def get_save_rating_uc() -> SaveRatingUseCase:
     s = _services()
     return SaveRatingUseCase(ratings_repo=s["repo"])
+
+
+def get_book_metrics_uc() -> GetBookMetricsUseCase:
+    s = _services()
+    return GetBookMetricsUseCase(ratings_repo=s["repo"])

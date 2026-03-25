@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from core.domain.model.rating import Rating
+from core.domain.model.rating_metrics import BookRatingMetrics
 from core.ports.rating_repository import IRatingRepository
 from ..database import SessionLocal
 from ..orm_models import RatingORM
@@ -61,6 +62,34 @@ class RatingRepository(IRatingRepository):
                 .all()
             )
             return set(rows)
+
+    def get_book_metrics(self, book_id: int) -> BookRatingMetrics:
+        with SessionLocal() as session:
+            stmt = select(
+                func.count().label("rating_count"),
+                func.avg(RatingORM.score).label("rating_mean"),
+                *[
+                    func.sum(
+                        case((RatingORM.score == score, 1), else_=0)
+                    ).label(f"count_{score}")
+                    for score in range(1, 6)
+                ],
+            ).where(RatingORM.book_id == book_id)
+
+            row = session.execute(stmt).one()
+            rating_count: int = int(row.rating_count or 0)
+            rating_mean_raw = row.rating_mean
+            rating_mean: float = float(rating_mean_raw or 0.0)
+            ratings_by_score: dict[int, int] = {
+                score: int(getattr(row, f"count_{score}") or 0) for score in range(1, 6)
+            }
+
+            return BookRatingMetrics(
+                book_id=book_id,
+                rating_count=rating_count,
+                rating_mean=rating_mean,
+                ratings_by_score=ratings_by_score,
+            )
 
 
 def _to_domain(row: RatingORM) -> Rating:
