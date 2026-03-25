@@ -28,3 +28,5 @@ class BookRatingMetricsResponse(BaseModel):
     rating_count: int
     rating_mean: float
     ratings_by_score: dict[int, int]
+    impressions_count: int
+    clicks_count: int

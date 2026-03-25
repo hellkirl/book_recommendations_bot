@@ -12,6 +12,6 @@ class Base(DeclarativeBase):
 
 
 def init_db() -> None:
-    from adapters.outbound.postgres.orm_models import RatingORM
+    from adapters.outbound.postgres.orm_models import RatingORM, BookInteractionORM
 
     Base.metadata.create_all(bind=engine)

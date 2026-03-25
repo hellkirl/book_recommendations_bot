@@ -5,13 +5,20 @@ from adapters.outbound.ml.content_based import ContentService
 from adapters.outbound.ml.collaborative import CollaborativeService
 from adapters.outbound.ml.hybrid import HybridService
 from adapters.outbound.postgres.user_repository.repository import RatingRepository
+from adapters.outbound.postgres.book_interactions_repository.repository import (
+    BookInteractionRepository,
+)
 
 from core.application.usecases.get_popular import GetPopularUseCase
 from core.application.usecases.get_similar import GetSimilarUseCase
 from core.application.usecases.search_by_query import SearchByQueryUseCase
 from core.application.usecases.get_recommendations import GetRecommendationsUseCase
 from core.application.usecases.get_book_metrics import GetBookMetricsUseCase
+from core.application.usecases.get_book_interaction_metrics import (
+    GetBookInteractionMetricsUseCase,
+)
 from core.application.usecases.save_rating import SaveRatingUseCase
+from core.application.usecases.record_book_interaction import RecordBookInteractionUseCase
 
 
 @lru_cache(maxsize=1)
@@ -22,6 +29,7 @@ def _services():
         collaborative=CollaborativeService(),
         hybrid=HybridService(),
         repo=RatingRepository(),
+        interactions_repo=BookInteractionRepository(),
     )
 
 
@@ -58,3 +66,15 @@ def get_save_rating_uc() -> SaveRatingUseCase:
 def get_book_metrics_uc() -> GetBookMetricsUseCase:
     s = _services()
     return GetBookMetricsUseCase(ratings_repo=s["repo"])
+
+
+def get_record_book_interaction_uc() -> RecordBookInteractionUseCase:
+    s = _services()
+    return RecordBookInteractionUseCase(interactions_repo=s["interactions_repo"])
+
+
+def get_book_interaction_metrics_uc() -> GetBookInteractionMetricsUseCase:
+    s = _services()
+    return GetBookInteractionMetricsUseCase(
+        interactions_repo=s["interactions_repo"]
+    )

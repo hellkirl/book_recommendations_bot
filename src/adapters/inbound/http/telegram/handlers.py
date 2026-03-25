@@ -10,6 +10,7 @@ from adapters.inbound.http.api.dependencies import (
     get_search_uc,
     get_recommendations_uc,
     get_save_rating_uc,
+    get_record_book_interaction_uc,
 )
 from adapters.outbound.ml.model_loader import get_artifacts
 from .keyboards import genres_keyboard, rating_keyboard, main_menu_keyboard, GENRE_RU
@@ -160,6 +161,9 @@ async def cb_menu_genres(callback: CallbackQuery):
 async def cb_menu_trending(callback: CallbackQuery):
     uc = get_popular_uc()
     books = uc.execute(mode="trends", telegram_id=callback.from_user.id, n=10)
+    record_uc = get_record_book_interaction_uc()
+    for b in books:
+        record_uc.execute_impression(book_id=b.book_id, telegram_id=callback.from_user.id)
     await callback.message.answer(
         f"🔥 <b>Сейчас в тренде</b>\n\n{_format_books(books)}",
         parse_mode="HTML",
@@ -179,6 +183,9 @@ async def cb_menu_recommend(callback: CallbackQuery):
             "💡 Начните с просмотра жанров или трендов."
         )
     else:
+        record_uc = get_record_book_interaction_uc()
+        for b in books:
+            record_uc.execute_impression(book_id=b.book_id, telegram_id=callback.from_user.id)
         text = f"✨ <b>Рекомендации для вас</b>\n\n{_format_books(books)}"
 
     await callback.message.answer(text, parse_mode="HTML")
@@ -238,6 +245,9 @@ async def cb_genre(callback: CallbackQuery):
         telegram_id=callback.from_user.id,
         n=10,
     )
+    record_uc = get_record_book_interaction_uc()
+    for b in books:
+        record_uc.execute_impression(book_id=b.book_id, telegram_id=callback.from_user.id)
     await callback.message.answer(
         f"📖 <b>Лучшее в жанре «{genre_ru}»</b>\n\n{_format_books(books)}",
         parse_mode="HTML",
@@ -249,6 +259,9 @@ async def cb_genre(callback: CallbackQuery):
 async def cmd_trending(message: Message):
     uc = get_popular_uc()
     books = uc.execute(mode="trends", telegram_id=message.from_user.id, n=10)
+    record_uc = get_record_book_interaction_uc()
+    for b in books:
+        record_uc.execute_impression(book_id=b.book_id, telegram_id=message.from_user.id)
     await message.answer(
         f"🔥 <b>Сейчас в тренде</b>\n\n{_format_books(books)}",
         parse_mode="HTML",
@@ -286,6 +299,9 @@ async def handle_search_query(message: Message, state: FSMContext):
 async def _do_search(message: Message, query: str):
     uc = get_search_uc()
     books = uc.execute(query=query, n=10)
+    record_uc = get_record_book_interaction_uc()
+    for b in books:
+        record_uc.execute_impression(book_id=b.book_id, telegram_id=message.from_user.id)
     await message.answer(
         f"🔍 <b>Результаты поиска: «{query}»</b>\n\n{_format_books(books)}",
         parse_mode="HTML",
@@ -314,6 +330,8 @@ async def cmd_similar(message: Message):
 @router.message(F.text.regexp(r"^/similar_(\d+)"))
 async def cmd_similar_shortcut(message: Message):
     book_id = int(message.text.split("_", 1)[1])
+    record_uc = get_record_book_interaction_uc()
+    record_uc.execute_click(book_id=book_id, telegram_id=message.from_user.id)
     await _do_similar(message, book_id)
 
 
@@ -321,6 +339,9 @@ async def _do_similar(message: Message, book_id: int):
     book_title = _get_book_title(book_id)
     uc = get_similar_uc()
     books = uc.execute(book_id=book_id, telegram_id=message.from_user.id, n=10)
+    record_uc = get_record_book_interaction_uc()
+    for b in books:
+        record_uc.execute_impression(book_id=b.book_id, telegram_id=message.from_user.id)
     await message.answer(
         f"📖 <b>Похожие на «{book_title}»</b>\n\n{_format_books(books)}",
         parse_mode="HTML",
@@ -339,6 +360,9 @@ async def cmd_recommend(message: Message):
             "💡 Начните с просмотра жанров (/genres) или трендов (/trending)."
         )
     else:
+        record_uc = get_record_book_interaction_uc()
+        for b in books:
+            record_uc.execute_impression(book_id=b.book_id, telegram_id=message.from_user.id)
         text = f"✨ <b>Рекомендации для вас</b>\n\n{_format_books(books)}"
 
     await message.answer(text, parse_mode="HTML")
@@ -358,6 +382,8 @@ async def cmd_rate(message: Message):
                 parse_mode="HTML",
             )
             return
+        record_uc = get_record_book_interaction_uc()
+        record_uc.execute_click(book_id=book_id, telegram_id=message.from_user.id)
         await _do_rate(message, book_id, score)
     elif len(parts) == 2:
         try:
@@ -369,6 +395,8 @@ async def cmd_rate(message: Message):
                 parse_mode="HTML",
             )
             return
+        record_uc = get_record_book_interaction_uc()
+        record_uc.execute_click(book_id=book_id, telegram_id=message.from_user.id)
         book_title = _get_book_title(book_id)
         await message.answer(
             f"⭐ <b>Оцените книгу</b>\n\n«{book_title}»\n\nВыберите оценку:",
@@ -387,6 +415,8 @@ async def cmd_rate(message: Message):
 @router.message(F.text.regexp(r"^/rate_(\d+)$"))
 async def cmd_rate_shortcut(message: Message):
     book_id = int(message.text.split("_", 1)[1])
+    record_uc = get_record_book_interaction_uc()
+    record_uc.execute_click(book_id=book_id, telegram_id=message.from_user.id)
     book_title = _get_book_title(book_id)
     await message.answer(
         f"⭐ <b>Оцените книгу</b>\n\n«{book_title}»\n\nВыберите оценку:",
@@ -399,6 +429,8 @@ async def cmd_rate_shortcut(message: Message):
 async def cb_rate(callback: CallbackQuery):
     _, book_id_str, score_str = callback.data.split(":")
     book_id, score = int(book_id_str), int(score_str)
+    record_uc = get_record_book_interaction_uc()
+    record_uc.execute_click(book_id=book_id, telegram_id=callback.from_user.id)
     await _do_rate(callback.message, book_id, score, user_id=callback.from_user.id)
     await callback.answer("Оценка сохранена! ✨")
 
